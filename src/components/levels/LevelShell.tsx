@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react';
+import { flushSync } from 'react-dom';
 import { QUEST_LEVELS } from '../../data/levels';
 import { useGame } from '../../state/GameContext';
 import { LEVEL_ORDER, allLevelsComplete } from '../../state/gameLogic';
@@ -34,7 +35,9 @@ export function LevelShell({ level, heading, subheading, children }: LevelShellP
   useEffect(() => () => window.clearTimeout(timer.current), []);
 
   const finish = () => {
-    dispatch({ type: 'COMPLETE_LEVEL', level });
+    // Commit before navigating. Otherwise the route guard can run first, see the level as
+    // unfinished, and send the student back (WebKit fires hashchange early enough for this).
+    flushSync(() => dispatch({ type: 'COMPLETE_LEVEL', level }));
     const isLast = idx === LEVEL_ORDER.length - 1;
     navigate(editing || isLast ? paths.review : paths.level(LEVEL_ORDER[idx + 1]));
   };

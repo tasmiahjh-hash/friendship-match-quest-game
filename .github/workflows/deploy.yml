@@ -27,8 +27,8 @@ jobs:
       - run: npm ci --ignore-scripts
       - run: npm run typecheck
       - run: npm test
-      - run: npx playwright install --with-deps chromium
-      - run: npm run test:e2e -- --project=desktop --project=small-phone
+      - run: npx playwright install --with-deps chromium webkit
+      - run: npm run test:e2e -- --project=desktop --project=small-phone --project=iphone
 
   build:
     if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'

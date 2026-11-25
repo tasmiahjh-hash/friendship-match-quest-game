@@ -28,6 +28,13 @@ export const HANGOUT_IDEAS: HangoutIdea[] = [
     gradient: ['#6cc6ff', '#7c6cff'],
   },
   {
+    id: 'volunteer',
+    name: 'Volunteer at an FAC event',
+    emoji: '🤝',
+    description: 'Join us at a Friends Across Campus volunteer activity and make a difference together.',
+    gradient: ['#218e3c', '#f06cff'],
+  },
+  {
     id: 'seasonal-social',
     name: 'Seasonal Social',
     emoji: '🍂',

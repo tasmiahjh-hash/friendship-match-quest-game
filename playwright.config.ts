@@ -7,6 +7,8 @@ import { defineConfig, devices } from '@playwright/test';
  */
 const SITE = 'http://localhost:4173/friendship-match-quest-game/';
 
+const chrome = { channel: process.env.PW_CHANNEL || undefined };
+
 export default defineConfig({
   testDir: 'tests/e2e',
   workers: 1, // the stand-in backend is shared state
@@ -14,12 +16,14 @@ export default defineConfig({
   retries: process.env.CI ? 1 : 0, // shared CI machines are slow; a real bug fails twice
   reporter: 'list',
   outputDir: 'test-results',
-  use: { baseURL: SITE, channel: process.env.PW_CHANNEL || undefined, trace: 'retain-on-failure' },
+  use: { baseURL: SITE, trace: 'retain-on-failure' },
   projects: [
-    { name: 'desktop', use: { ...devices['Desktop Chrome'] } },
-    { name: 'tablet', use: { ...devices['Desktop Chrome'], viewport: { width: 820, height: 1180 }, hasTouch: true } },
-    { name: 'phone', use: { ...devices['Pixel 5'] } },
-    { name: 'small-phone', use: { ...devices['Pixel 5'], viewport: { width: 320, height: 640 } } },
+    { name: 'desktop', use: { ...devices['Desktop Chrome'], ...chrome } },
+    { name: 'tablet', use: { ...devices['Desktop Chrome'], ...chrome, viewport: { width: 820, height: 1180 }, hasTouch: true } },
+    { name: 'phone', use: { ...devices['Pixel 5'], ...chrome } },
+    { name: 'small-phone', use: { ...devices['Pixel 5'], ...chrome, viewport: { width: 320, height: 640 } } },
+    // Safari's engine orders some events differently from Chrome's, so it runs everything too.
+    { name: 'iphone', use: { ...devices['iPhone 13'] } },
   ],
   webServer: [
     { command: 'node tests/support/fakeServer.mjs', url: 'http://localhost:8787/exec', env: { FAKE_BACKEND_PORT: '8787' }, reuseExistingServer: false },

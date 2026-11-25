@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react';
+import { flushSync } from 'react-dom';
 import { Link } from '../components/layout/Link';
 import { Avatar } from '../components/ui/Avatar';
 import { Button } from '../components/ui/Button';
@@ -113,7 +114,7 @@ export function ReviewScreen() {
     try {
       const receipt = await getSubmissionAdapter().submitRegistration({ ...answers, submissionKey: attempt.key });
       saveReceiptEmail(answers.email);
-      dispatch({ type: 'REGISTERED', receipt });
+      flushSync(() => dispatch({ type: 'REGISTERED', receipt })); // commit before navigating, as in LevelShell
       if (alive.current) navigate(paths.complete, { replace: true });
     } catch (e) {
       const err = toSubmissionError(e);

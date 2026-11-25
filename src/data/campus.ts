@@ -9,10 +9,10 @@ export const UNIVERSITY = { id: 'ualberta', name: 'University of Alberta', short
  * Keep in sync with CATALOG in integrations/google-sheets/Code.gs (a test checks this).
  */
 export const CAMPUSES: Campus[] = [
-  { id: 'ualberta-north', name: 'University of Alberta — North Campus (Main Campus)', short: 'North Campus', place: 'Edmonton', emoji: '🏛️' },
-  { id: 'ualberta-augustana', name: 'University of Alberta — Augustana Campus', short: 'Augustana Campus', place: 'Camrose', emoji: '🌾' },
-  { id: 'ualberta-saint-jean', name: 'University of Alberta — Campus Saint-Jean', short: 'Campus Saint-Jean', place: 'Edmonton', emoji: '⚜️' },
-  { id: 'ualberta-south', name: 'University of Alberta — South Campus', short: 'South Campus', place: 'Edmonton', emoji: '🌱' },
+  { id: 'ualberta-north', name: 'University of Alberta: North Campus (Main Campus)', short: 'North Campus', place: 'Edmonton', emoji: '🏛️' },
+  { id: 'ualberta-augustana', name: 'University of Alberta: Augustana Campus', short: 'Augustana Campus', place: 'Camrose', emoji: '🌾' },
+  { id: 'ualberta-saint-jean', name: 'University of Alberta: Campus Saint-Jean', short: 'Campus Saint-Jean', place: 'Edmonton', emoji: '⚜️' },
+  { id: 'ualberta-south', name: 'University of Alberta: South Campus', short: 'South Campus', place: 'Edmonton', emoji: '🌱' },
 ];
 
 export const YEARS: YearOfStudy[] = ['1st', '2nd', '3rd', '4th', '5th+', 'Grad'];
