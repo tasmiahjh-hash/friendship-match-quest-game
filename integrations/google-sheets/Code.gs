@@ -31,10 +31,10 @@ var SCHEMA_VERSION = 1;
 var CATALOG = {
   university: { ualberta: 'University of Alberta' },
   campus: {
-    'ualberta-north': 'University of Alberta — North Campus (Main Campus)',
-    'ualberta-augustana': 'University of Alberta — Augustana Campus',
-    'ualberta-saint-jean': 'University of Alberta — Campus Saint-Jean',
-    'ualberta-south': 'University of Alberta — South Campus'
+    'ualberta-north': 'University of Alberta: North Campus (Main Campus)',
+    'ualberta-augustana': 'University of Alberta: Augustana Campus',
+    'ualberta-saint-jean': 'University of Alberta: Campus Saint-Jean',
+    'ualberta-south': 'University of Alberta: South Campus'
   },
   year: { '1st': '1st year', '2nd': '2nd year', '3rd': '3rd year', '4th': '4th year', '5th+': '5th+ year', Grad: 'Grad' },
   avatar: ['🦊', '🐼', '🦉', '🐸', '🐧', '🦦', '🐨', '🦋'],
@@ -52,7 +52,9 @@ var CATALOG = {
   },
   meetPreference: { 'chat-first': 'Message first', event: 'Meet in person', either: 'Either works' },
   campusMatch: { 'same-campus': 'My campus', 'any-campus': 'Any U of A campus' },
-  hangouts: { 'craft-connect': 'Craft & Connect', 'karaoke-night': 'Karaoke Night', 'seasonal-social': 'Seasonal Social', 'games-night': 'Games Night' },
+  hangouts: {
+    'craft-connect': 'Craft & Connect', 'karaoke-night': 'Karaoke Night', volunteer: 'Volunteer at an FAC event',
+    'seasonal-social': 'Seasonal Social', 'games-night': 'Games Night' },
   availability: {
     'weekday-mornings': 'Weekday mornings', 'weekday-afternoons': 'Weekday afternoons', 'weekday-evenings': 'Weekday evenings',
     'weekend-days': 'Weekend days', 'weekend-evenings': 'Weekend evenings'

@@ -23,7 +23,8 @@ export default defineConfig({
     { name: 'phone', use: { ...devices['Pixel 5'], ...chrome } },
     { name: 'small-phone', use: { ...devices['Pixel 5'], ...chrome, viewport: { width: 320, height: 640 } } },
     // Safari's engine orders some events differently from Chrome's, so it runs everything too.
-    { name: 'iphone', use: { ...devices['iPhone 13'] } },
+    // WebKit renders this page's blur effects slowly on CI machines, so it gets more time.
+    { name: 'iphone', timeout: 180_000, use: { ...devices['iPhone 13'] } },
   ],
   webServer: [
     { command: 'node tests/support/fakeServer.mjs', url: 'http://localhost:8787/exec', env: { FAKE_BACKEND_PORT: '8787' }, reuseExistingServer: false },

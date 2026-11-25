@@ -18,10 +18,10 @@ describe('website and Apps Script agree', () => {
   it('on campuses: exactly the four University of Alberta campuses', () => {
     expect(C.university).toEqual({ [UNIVERSITY.id]: UNIVERSITY.name });
     expect(CAMPUSES.map((c) => c.name)).toEqual([
-      'University of Alberta — North Campus (Main Campus)',
-      'University of Alberta — Augustana Campus',
-      'University of Alberta — Campus Saint-Jean',
-      'University of Alberta — South Campus',
+      'University of Alberta: North Campus (Main Campus)',
+      'University of Alberta: Augustana Campus',
+      'University of Alberta: Campus Saint-Jean',
+      'University of Alberta: South Campus',
     ]);
     expect(C.campus).toEqual(map(CAMPUSES, (c) => c.name));
   });

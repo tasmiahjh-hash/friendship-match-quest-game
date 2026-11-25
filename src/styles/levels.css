@@ -122,6 +122,7 @@
 }
 
 /* ---------- Level 1: Vibe ---------- */
+/* Hover lifts are limited to real pointers: on touch screens :hover sticks after a tap. */
 .vibe-meter {
   display: flex;
   align-items: center;
@@ -175,10 +176,12 @@
   transition: transform 0.25s var(--ease-spring), border-color 0.25s, background 0.25s, box-shadow 0.25s;
 }
 
-.interest:hover:not(:disabled) {
-  transform: translateY(-4px);
-  border-color: hsla(var(--hue), 90%, 70%, 0.5);
-  background: hsla(var(--hue), 80%, 60%, 0.08);
+@media (hover: hover) and (pointer: fine) {
+  .interest:hover:not(:disabled) {
+    transform: translateY(-4px);
+    border-color: hsla(var(--hue), 90%, 70%, 0.5);
+    background: hsla(var(--hue), 80%, 60%, 0.08);
+  }
 }
 
 .interest:disabled { opacity: 0.5; }
@@ -283,11 +286,17 @@
   animation: fadeUp 0.5s var(--ease-out) both;
 }
 
-.option:hover { transform: translateY(-6px) rotate(-0.6deg); border-color: rgba(255, 179, 107, 0.6); box-shadow: 0 16px 36px rgba(0, 0, 0, 0.3); }
-.option:nth-child(even):hover { transform: translateY(-6px) rotate(0.6deg); }
+@media (hover: hover) and (pointer: fine) {
+  .option:hover { transform: translateY(-6px) rotate(-0.6deg); border-color: rgba(255, 179, 107, 0.6); box-shadow: 0 16px 36px rgba(0, 0, 0, 0.3); }
+}
+@media (hover: hover) and (pointer: fine) {
+  .option:nth-child(even):hover { transform: translateY(-6px) rotate(0.6deg); }
+}
 
 .option__emoji { font-size: 3rem; transition: transform 0.4s var(--ease-spring); }
-.option:hover .option__emoji { transform: scale(1.15); }
+@media (hover: hover) and (pointer: fine) {
+  .option:hover .option__emoji { transform: scale(1.15); }
+}
 .option__label { font-family: var(--font-display); font-weight: 800; font-size: 1.25rem; }
 .option__blurb { color: var(--text-soft); font-size: 0.9rem; }
 
@@ -375,7 +384,9 @@
   transition: all 0.25s var(--ease-spring);
 }
 
-.uni:hover { transform: translateY(-3px); border-color: var(--border-strong); }
+@media (hover: hover) and (pointer: fine) {
+  .uni:hover { transform: translateY(-3px); border-color: var(--border-strong); }
+}
 .uni__emoji { font-size: 1.6rem; }
 .uni__name { font-weight: 700; }
 .uni__domain { font-size: 0.8rem; color: var(--muted); }
@@ -455,7 +466,9 @@
   transition: all 0.25s var(--ease-spring);
 }
 
-.pref:hover { transform: translateY(-3px); border-color: var(--border-strong); }
+@media (hover: hover) and (pointer: fine) {
+  .pref:hover { transform: translateY(-3px); border-color: var(--border-strong); }
+}
 .pref__emoji { font-size: 2rem; margin-bottom: 0.3rem; }
 .pref__title { font-family: var(--font-display); font-weight: 800; font-size: 1.2rem; }
 .pref__body { font-size: 0.9rem; color: var(--text-soft); }
@@ -491,7 +504,9 @@
   transition: transform 0.3s var(--ease-spring), border-color 0.25s, box-shadow 0.25s;
 }
 
-button.event:hover { transform: translateY(-5px); box-shadow: 0 18px 40px rgba(0, 0, 0, 0.35); }
+@media (hover: hover) and (pointer: fine) {
+  button.event:hover { transform: translateY(-5px); box-shadow: 0 18px 40px rgba(0, 0, 0, 0.35); }
+}
 
 .event__art {
   position: relative;
@@ -512,7 +527,9 @@ button.event:hover { transform: translateY(-5px); box-shadow: 0 18px 40px rgba(0
 }
 
 .event__emoji { font-size: 3.2rem; filter: drop-shadow(0 6px 10px rgba(0, 0, 0, 0.25)); transition: transform 0.4s var(--ease-spring); z-index: 1; }
-button.event:hover .event__emoji { transform: rotate(-10deg) scale(1.1); }
+@media (hover: hover) and (pointer: fine) {
+  button.event:hover .event__emoji { transform: rotate(-10deg) scale(1.1); }
+}
 
 .event__info { padding: 1rem 1.2rem 1.1rem; display: flex; flex-direction: column; gap: 0.45rem; flex: 1; }
 .event__name { font-family: var(--font-display); font-weight: 800; font-size: 1.2rem; }
@@ -560,7 +577,9 @@ button.event:hover .event__emoji { transform: rotate(-10deg) scale(1.1); }
   transition: all 0.25s var(--ease-spring);
 }
 
-.avatar-picker__opt:hover { transform: scale(1.08); }
+@media (hover: hover) and (pointer: fine) {
+  .avatar-picker__opt:hover { transform: scale(1.08); }
+}
 .avatar-picker__opt.is-on { background: var(--grad-primary); border-color: #fff; transform: scale(1.12); box-shadow: var(--glow-coral); }
 
 .link {

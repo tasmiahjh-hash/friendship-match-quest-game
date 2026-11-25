@@ -68,7 +68,7 @@ describe('registration', () => {
       'First Name': 'Testy',
       Email: 'testy.mctest@ualberta.ca',
       University: 'University of Alberta',
-      Campus: 'University of Alberta — North Campus (Main Campus)',
+      Campus: 'University of Alberta: North Campus (Main Campus)',
       'Campus ID': 'ualberta-north',
       Program: 'Synthetic Studies',
       'Year of Study': '2nd year',

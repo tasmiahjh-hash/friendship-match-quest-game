@@ -105,11 +105,11 @@ test('full journey: play, go back and change answers, submit, confirm', async ({
   await expect(page.getByText('TEST 101')).toBeVisible();
   await page.getByRole('radio', { name: /Campus Saint-Jean/ }).click();
   await page.getByRole('button', { name: /Save and review/ }).click();
-  await expect(page.getByText('University of Alberta — Campus Saint-Jean')).toBeVisible();
+  await expect(page.getByText('University of Alberta: Campus Saint-Jean')).toBeVisible();
 
   // A refresh loses nothing.
   await page.reload();
-  await expect(page.getByText('University of Alberta — Campus Saint-Jean')).toBeVisible();
+  await expect(page.getByText('University of Alberta: Campus Saint-Jean')).toBeVisible();
 
   await consentAndSubmit(page);
   await expect(page.getByRole('heading', { name: /Quest Complete!/ })).toBeVisible();

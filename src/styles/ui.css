@@ -26,9 +26,11 @@
   box-shadow: var(--glow-coral);
 }
 
-.btn--primary:hover:not(:disabled) {
-  transform: translateY(-2px);
-  box-shadow: 0 12px 32px rgba(255, 138, 107, 0.5);
+@media (hover: hover) and (pointer: fine) {
+  .btn--primary:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: 0 12px 32px rgba(255, 138, 107, 0.5);
+  }
 }
 
 .btn--primary:disabled {
@@ -49,7 +51,9 @@
   box-shadow: 0 8px 28px rgba(167, 139, 250, 0.4);
 }
 
-.btn--magic:hover:not(:disabled) { transform: translateY(-2px); }
+@media (hover: hover) and (pointer: fine) {
+  .btn--magic:hover:not(:disabled) { transform: translateY(-2px); }
+}
 
 .btn--secondary {
   background: var(--surface-2);
