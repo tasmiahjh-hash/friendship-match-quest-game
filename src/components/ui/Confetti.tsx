@@ -1,4 +1,5 @@
 import { useMemo } from 'react';
+import { prefersReducedMotion } from '../../utils';
 import { Portal } from './Portal';
 
 const COLORS = ['#ff8a6b', '#ffb36b', '#ffd166', '#5ee2b5', '#a78bfa', '#ff7eb6', '#6cc6ff'];
@@ -24,6 +25,8 @@ export function Confetti({ count = 90, burstKey }: ConfettiProps) {
       })),
     [count, burstKey],
   );
+
+  if (prefersReducedMotion()) return null;
 
   return (
     <Portal>

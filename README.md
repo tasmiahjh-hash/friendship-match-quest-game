@@ -1,60 +1,60 @@
-# Friendship Quest (MVP prototype)
+# Friendship Quest
 
-A gamified friendship-matching prototype for university students: **Play → Match → Chat → Meet**.
-Everything runs locally with mock data. There is no backend, auth, email or realtime networking yet.
+A gamified friendship quest for University of Alberta students, by Friends Across Campus (FAC).
+
+Students play a short quest, review their answers and register. FAC administrators look for compatible students and email them when there's a match. There are no instant matches, accounts, or in-app messaging in this release.
+
+```
+React + Vite (GitHub Pages)  →  Google Apps Script  →  private Google Spreadsheet
+```
 
 ## Run it
 
+Node 20 or newer.
+
 ```bash
-npm install
-npm run dev        # http://localhost:5173
-npm run build      # typecheck + production build into dist/
-npm run preview    # serve the production build
+npm ci --ignore-scripts
+npm run dev            # http://localhost:5173
+npm run dev:backend    # optional: local stand-in backend, see docs/DEPLOYMENT.md
 ```
 
-Progress is saved to `localStorage`. Use **Replay demo** (sidebar, or ☰ on mobile) to start over.
-On the welcome screen, **Presenter shortcut: skip to match** fills a sample profile and jumps to matchmaking.
+| Command | Does |
+| --- | --- |
+| `npm run build` | Typecheck and production build into `dist/` |
+| `npm run typecheck` | Types only |
+| `npm test` | Unit and component tests, plus the real `Code.gs` on mocked Google services |
+| `npm run test:e2e` | Browser tests against a production build and the local stand-in backend. Set `PW_CHANNEL=chrome` to use installed Chrome |
+| `npm run check:release` | Checks a build and its settings before publishing. Add `-- --strict` to require a configured backend |
 
-## Project structure
+## Set up and deploy
+
+1. Spreadsheet and endpoint: [integrations/google-sheets/README.md](integrations/google-sheets/README.md)
+2. GitHub Pages: [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md)
+3. Before launch: [docs/RELEASE_CHECKLIST.md](docs/RELEASE_CHECKLIST.md)
+
+Settings are in [.env.example](.env.example). They're compiled into the public site, so never put a secret there. Without an endpoint the site says registration isn't open.
+
+## Structure
 
 ```
 src/
-  types/           Domain types (profile, match, chat, meetup, sharing, safety)
-  data/            All mock content: interests, questions, universities, events,
-                   mock students, achievements/stages, safety copy, chat replies
-  services/
-    matchService   MatchProvider interface + compatibility scoring + mock provider
-    mockPeer       Simulated "other student" (seed messages, replies, timings)
-    storage        localStorage persistence
-  state/
-    gameLogic      Reducer: XP, badges, friendship stages, chat, meetup, sharing, safety
-    GameContext    Provider + useGame()
-    useMockPeer    Hook driving the simulated match (swap for a realtime channel)
-  components/
-    ui/            Button, Modal, Avatar, XPBar, Toaster, Confetti, ring, Portal...
-    hud/           Player HUD (desktop sidebar / mobile top bar + drawer)
-    levels/        LevelShell + the 5 onboarding levels
-    room/          Match Room: header, thread, composer, meetup, contact sharing, safety modals
-  screens/         Welcome, Quest Complete, Match Reveal, Match Room
-  styles/          Design tokens + per-area CSS
+  data/                 Campuses, questions, interests, badges, copy
+  state/                Game reducer, validation, hash router
+  services/submission/  SubmissionAdapter interface and the Google Sheets adapter
+  services/matching/    Compatibility scoring, kept for later, not used by the site
+  components/           UI, HUD, quest levels, feedback form, site chrome
+  screens/, pages/      Landing, review, confirmation; How It Works, Privacy, Help Us Improve
+integrations/google-sheets/   Apps Script backend
+supabase/               Database work for a later release. Not used by this one
+tests/                  unit, e2e, support
 ```
 
-## Mock vs real
+## Extending it
 
-| Area | Status |
-| --- | --- |
-| Onboarding, XP, levels, badges, stages | Real client logic (local state) |
-| Compatibility scoring | Real algorithm, run client-side against 5 fictional students |
-| University email check | Format + domain check only; no verification code is sent |
-| Match chat | Local only; the match's replies are scripted (`services/mockPeer.ts`) |
-| Meetup consent | The match's "yes" is simulated after a delay |
-| Contact sharing | Local state; the match's Instagram share is simulated |
-| Report / block / unmatch | Functional UI and state; reports are not sent anywhere |
-| Events | Static mock list in `data/events.ts` |
+- **New storage:** implement `SubmissionAdapter` and return it from `src/services/submission/index.ts`. Nothing else changes. Add the new origin to the content security policy in `vite.config.ts`.
+- **Changing a question:** edit `src/data/` and `CATALOG` in `Code.gs` together; `npm test` fails if they differ.
+- **Chat, match reveal, meetup consent, blocking:** the original prototype screens were removed from the public site. They're in Git at commit `43e3115` (`src/components/room`, `src/screens/Match*.tsx`). The Supabase schema for them is in `supabase/`, with the design in [docs/backend-plan.md](docs/backend-plan.md).
 
-## Safety principles built into the design
+## Privacy rules for contributors
 
-- Email/Instagram are never shown to a match unless that person explicitly shares them; sharing is per-channel and can be hidden again.
-- "Keep chatting here" earns the same XP as sharing, so contact sharing is never incentivised.
-- Meetup interest is private until both people say yes; first meetups are framed at supervised, public FAC events.
-- Moderators do not read chats by default; a report shares the reported conversation for review.
+Never commit participant data, spreadsheet links or credentials. Don't log answers. Use synthetic data in tests. Don't add analytics or third-party requests.

@@ -1,5 +1,7 @@
 # Friendship Quest: Supabase backend plan
 
+> **Status:** future work. The first public release stores submissions in Google Sheets and uses no Supabase services, so parts of this plan (file names, flow, email-domain rules) describe the earlier prototype.
+
 Branch: `real-backend` · Baseline: `main @ 4526705` (working mock prototype)
 
 ## Milestone 1 (definition of done)

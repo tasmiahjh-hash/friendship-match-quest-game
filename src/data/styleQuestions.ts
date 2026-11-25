@@ -34,14 +34,14 @@ export const STYLE_QUESTIONS: StyleQuestion[] = [
     kicker: 'Hanging out feels best…',
     prompt: 'One-on-one or in a group?',
     options: [
-      { id: 'one-on-one', label: 'One-on-one', emoji: '🫶', blurb: 'Deep chats, real connection' },
+      { id: 'one-on-one', label: 'One-on-one', emoji: '☕', blurb: 'Deep chats, real connection' },
       { id: 'small', label: 'Small crew', emoji: '👥', blurb: 'Three or four, just right' },
       { id: 'group', label: 'Big group', emoji: '🎈', blurb: 'Chaos is part of the fun' },
     ],
   },
   {
     id: 'values',
-    kicker: 'The heart of it…',
+    kicker: 'What it comes down to…',
     prompt: 'What matters most in a friendship?',
     options: [
       { id: 'loyalty', label: 'Loyalty', emoji: '🛡️', blurb: 'Always in your corner' },

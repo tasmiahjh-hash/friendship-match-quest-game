@@ -1,29 +1,55 @@
+import { useEffect, useRef } from 'react';
+import { MobileTopBar, PlayerHud } from './components/hud/PlayerHud';
+import { SiteFooter, SiteHeader } from './components/layout/SiteChrome';
 import { CampusLevel } from './components/levels/CampusLevel';
 import { ContactLevel } from './components/levels/ContactLevel';
 import { MeetLevel } from './components/levels/MeetLevel';
 import { StyleLevel } from './components/levels/StyleLevel';
 import { VibeLevel } from './components/levels/VibeLevel';
-import { MobileTopBar, PlayerHud } from './components/hud/PlayerHud';
 import { Toaster } from './components/ui/Toaster';
-import { MatchRevealScreen } from './screens/MatchRevealScreen';
-import { MatchRoomScreen } from './screens/MatchRoomScreen';
+import { QUEST_LEVELS } from './data/levels';
+import { FeedbackPage } from './pages/FeedbackPage';
+import { HowItWorksPage } from './pages/HowItWorksPage';
+import { NotFoundPage } from './pages/NotFoundPage';
+import { PrivacyPage } from './pages/PrivacyPage';
 import { QuestCompleteScreen } from './screens/QuestCompleteScreen';
+import { ReviewScreen } from './screens/ReviewScreen';
 import { WelcomeScreen } from './screens/WelcomeScreen';
 import { useGame } from './state/GameContext';
-import type { ScreenId } from './types';
-import { cx } from './utils';
+import { navigate, parseRoute, redirectFor, useHash, type Route } from './state/router';
+import type { QuestLevelId } from './types';
 
-const SCREENS: Record<ScreenId, () => JSX.Element> = {
-  welcome: WelcomeScreen,
-  vibe: VibeLevel,
-  style: StyleLevel,
-  campus: CampusLevel,
-  meet: MeetLevel,
+const LEVELS: Record<QuestLevelId, () => JSX.Element> = {
   contact: ContactLevel,
-  complete: QuestCompleteScreen,
-  reveal: MatchRevealScreen,
-  room: MatchRoomScreen,
+  campus: CampusLevel,
+  style: StyleLevel,
+  vibe: VibeLevel,
+  meet: MeetLevel,
 };
+
+function titleFor(route: Route): string {
+  const site = 'Friendship Quest by Friends Across Campus';
+  switch (route.name) {
+    case 'home':
+      return site;
+    case 'level': {
+      const l = QUEST_LEVELS.find((x) => x.id === route.level)!;
+      return `Level ${l.number}: ${l.title} · Friendship Quest`;
+    }
+    case 'review':
+      return 'Review your answers · Friendship Quest';
+    case 'complete':
+      return 'Quest complete · Friendship Quest';
+    case 'how-it-works':
+      return 'How It Works · Friendship Quest';
+    case 'privacy':
+      return 'Privacy Policy · Friendship Quest';
+    case 'feedback':
+      return 'Help Us Improve · Friendship Quest';
+    case 'not-found':
+      return 'Page not found · Friendship Quest';
+  }
+}
 
 function Ambient() {
   return (
@@ -34,36 +60,90 @@ function Ambient() {
   );
 }
 
+function QuestScreen({ route }: { route: Route }) {
+  if (route.name === 'level') {
+    const Level = LEVELS[route.level];
+    return <Level />;
+  }
+  return route.name === 'review' ? <ReviewScreen /> : <QuestCompleteScreen />;
+}
+
+function Page({ route }: { route: Route }) {
+  switch (route.name) {
+    case 'how-it-works':
+      return <HowItWorksPage />;
+    case 'privacy':
+      return <PrivacyPage />;
+    case 'feedback':
+      return <FeedbackPage />;
+    default:
+      return <NotFoundPage />;
+  }
+}
+
 export default function App() {
   const { state } = useGame();
-  const Screen = SCREENS[state.screen] ?? WelcomeScreen;
+  const hash = useHash();
+  const main = useRef<HTMLElement>(null);
+  const firstRender = useRef(true);
 
-  if (state.screen === 'welcome') {
-    return (
-      <div className="app">
-        <Ambient />
-        <main className="welcome-wrap">
-          <Screen />
-        </main>
-        <Toaster />
-      </div>
-    );
-  }
+  const requested = parseRoute(hash);
+  const redirect = redirectFor(requested, state);
+  const route = redirect ? parseRoute(`#${redirect}`) : requested;
+  const routeKey = route.name === 'level' ? route.level : route.name;
+
+  useEffect(() => {
+    if (redirect) navigate(redirect, { replace: true });
+  }, [redirect]);
+
+  // New page: update the title, go to the top, and move focus so screen readers notice.
+  useEffect(() => {
+    document.title = titleFor(route);
+    if (firstRender.current) {
+      firstRender.current = false;
+      return;
+    }
+    window.scrollTo({ top: 0 });
+    main.current?.focus({ preventScroll: true });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [routeKey]);
+
+  const mainProps = { ref: main, tabIndex: -1, id: 'main' };
+  const inQuest = route.name === 'level' || route.name === 'review' || route.name === 'complete';
 
   return (
     <div className="app">
+      {/* A plain #main link would collide with hash routing, so focus is moved by hand. */}
+      <button type="button" className="skip-link" onClick={() => main.current?.focus()}>
+        Skip to main content
+      </button>
       <Ambient />
-      <MobileTopBar />
-      <div className="shell">
-        <aside className="shell__sidebar">
-          <PlayerHud />
-        </aside>
-        <main className={cx('shell__main', state.screen === 'room' && 'shell__main--room')}>
-          <div className="screen" key={state.screen}>
-            <Screen />
+      {inQuest ? (
+        <>
+          <MobileTopBar />
+          <div className="shell">
+            <aside className="shell__sidebar" aria-label="Your progress">
+              <PlayerHud />
+            </aside>
+            <div className="shell__column">
+              <main className="shell__main" {...mainProps}>
+                <div className="screen" key={routeKey}>
+                  <QuestScreen route={route} />
+                </div>
+              </main>
+              <SiteFooter compact />
+            </div>
           </div>
-        </main>
-      </div>
+        </>
+      ) : (
+        <div className="site">
+          <SiteHeader />
+          <main className="site__main" {...mainProps}>
+            <div key={routeKey}>{route.name === 'home' ? <WelcomeScreen /> : <Page route={route} />}</div>
+          </main>
+          <SiteFooter />
+        </div>
+      )}
       <Toaster />
     </div>
   );

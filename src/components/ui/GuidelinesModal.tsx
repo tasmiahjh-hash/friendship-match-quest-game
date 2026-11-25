@@ -1,4 +1,4 @@
-import { COMMUNITY_GUIDELINES, MODERATION_EXPLAINER } from '../../data/safety';
+import { COMMUNITY_GUIDELINES, SAFETY_EXPLAINER } from '../../data/safety';
 import { Button } from './Button';
 import { Modal } from './Modal';
 
@@ -52,8 +52,10 @@ export function GuidelinesModal({ open, onClose, onAgree }: Props) {
         ))}
       </div>
       <div className="pill-note pill-note--lav">
-        <span className="pill-note__icon">🔐</span>
-        <span>{MODERATION_EXPLAINER}</span>
+        <span className="pill-note__icon" aria-hidden="true">
+          🛡️
+        </span>
+        <span>{SAFETY_EXPLAINER}</span>
       </div>
     </Modal>
   );

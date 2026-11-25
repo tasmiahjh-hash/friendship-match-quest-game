@@ -29,31 +29,30 @@ export function VibeLevel() {
         </>
       }
       subheading={`Pick at least ${MIN_INTERESTS} things you’d happily do with a new friend. We’ll use them to find people on your wavelength.`}
-      canContinue={remaining === 0}
-      hint={`Pick ${remaining} more`}
     >
       <div className="vibe-meter panel">
         <div className="vibe-meter__count">
           <strong>{selected.length}</strong>
           <span>/ {MAX_INTERESTS}</span>
         </div>
-        <div className="vibe-meter__track">
+        <div className="vibe-meter__track" aria-hidden="true">
           {Array.from({ length: MAX_INTERESTS }, (_, i) => (
             <span key={i} className={cx('vibe-meter__pip', i < selected.length && 'is-on', i === MIN_INTERESTS - 1 && 'is-goal')} />
           ))}
         </div>
-        <div className="vibe-meter__label" key={selected.length}>
+        <div className="vibe-meter__label" key={selected.length} aria-hidden="true">
           {meterLabel}
         </div>
       </div>
 
-      <div className="interest-grid stagger">
+      <div className="interest-grid stagger" role="group" aria-label="Interests">
         {INTERESTS.map((interest) => {
           const on = selected.includes(interest.id);
           const disabled = !on && atMax;
           return (
             <button
               key={interest.id}
+              type="button"
               className={cx('interest', on && 'is-on')}
               style={{ '--hue': interest.hue } as React.CSSProperties}
               aria-pressed={on}

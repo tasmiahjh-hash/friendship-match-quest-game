@@ -1,5 +1,6 @@
 /* ---------- Buttons ---------- */
 .btn {
+  text-decoration: none;
   --btn-pad-y: 0.8rem;
   --btn-pad-x: 1.4rem;
   display: inline-flex;
@@ -32,8 +33,14 @@
 
 .btn--primary:disabled {
   background: var(--surface-2);
-  color: var(--muted);
+  color: var(--text-soft);
   box-shadow: none;
+}
+
+.btn--disabled {
+  background: var(--surface);
+  border: 1px dashed var(--border-strong);
+  color: var(--muted);
 }
 
 .btn--magic {
@@ -114,17 +121,6 @@
   border: 2px solid rgba(255, 255, 255, 0.35);
 }
 
-.avatar__status {
-  position: absolute;
-  right: 2%;
-  bottom: 2%;
-  width: 26%;
-  height: 26%;
-  border-radius: 50%;
-  background: var(--mint);
-  border: 3px solid var(--bg-2);
-}
-
 /* ---------- XP bar ---------- */
 .xpbar {
   height: 10px;
@@ -194,11 +190,14 @@
   outline: none;
 }
 
-.input::placeholder { color: rgba(207, 198, 238, 0.45); }
+.input::placeholder { color: rgba(207, 198, 238, 0.65); }
+
+textarea.input { resize: vertical; min-height: 8rem; line-height: 1.5; }
+select.input option { background: var(--surface-solid); color: var(--text); }
 
 .input:focus {
   border-color: var(--peach);
-  box-shadow: 0 0 0 4px rgba(255, 179, 107, 0.15);
+  box-shadow: 0 0 0 3px rgba(255, 179, 107, 0.45);
   background: rgba(0, 0, 0, 0.3);
 }
 
@@ -206,6 +205,8 @@
 .input--invalid { border-color: rgba(255, 107, 129, 0.6); }
 
 .field__hint { font-size: 0.82rem; color: var(--muted); }
+.field__hint:empty { display: none; }
+.field__hint--row { display: flex; justify-content: space-between; gap: 1rem; }
 .field__hint--ok { color: var(--mint); }
 .field__hint--warn { color: #ffb3c0; }
 
@@ -400,13 +401,6 @@
   0% { opacity: 1; transform: translate3d(0, 0, 0) rotate(0deg); }
   100% { opacity: 0.9; transform: translate3d(var(--dx), 110vh, 0) rotate(var(--rot)); }
 }
-
-/* ---------- Compatibility ring ---------- */
-.ring { position: relative; display: grid; place-items: center; }
-.ring svg { transform: rotate(-90deg); }
-.ring__track { stroke: rgba(255, 255, 255, 0.1); }
-.ring__value { transition: stroke-dashoffset 1.6s var(--ease-out); }
-.ring__label { position: absolute; text-align: center; }
 
 /* ---------- Misc ---------- */
 .divider { height: 1px; background: var(--border); border: 0; margin: 0; }

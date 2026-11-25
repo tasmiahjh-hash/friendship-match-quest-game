@@ -1,94 +1,90 @@
-import { useEffect, useState } from 'react';
-import { QUEST_LEVELS } from '../data/levels';
-import { MOCK_STUDENTS } from '../data/students';
+import { useState } from 'react';
+import { Link } from '../components/layout/Link';
 import { Avatar } from '../components/ui/Avatar';
 import { Button } from '../components/ui/Button';
 import { Confetti } from '../components/ui/Confetti';
 import { CountUp } from '../components/ui/CountUp';
-import { mockMatchProvider } from '../services/matchService';
+import { PLAYER_AVATAR_GRADIENT } from '../data/avatars';
+import { QUEST_LEVELS } from '../data/levels';
+import { loadReceiptEmail } from '../services/storage';
 import { useGame } from '../state/GameContext';
-import { PLAYER_AVATAR_GRADIENT } from '../data/students';
-import type { MatchResult } from '../types';
-import { cx } from '../utils';
+import { navigate, paths } from '../state/router';
 
-type Phase = 'celebrate' | 'searching' | 'found';
-
-const STATUS_LINES = [
-  'Comparing vibes…',
-  'Matching friendship styles…',
-  'Checking your campus…',
-  'Lining up event availability…',
-  'Finding your flock…',
-];
-
-const CELEBRATE_MS = 3200;
-const SEARCH_MS = 4200;
-const FOUND_MS = 1100;
-
+/** Only reachable with a receipt, and a receipt only exists once the backend confirmed the save. */
 export function QuestCompleteScreen() {
-  const { state, dispatch } = useGame();
-  const [phase, setPhase] = useState<Phase>('celebrate');
-  const [line, setLine] = useState(0);
-  const [found, setFound] = useState<MatchResult | null>(null);
-  const foundId = found?.student.id ?? null;
+  const { state } = useGame();
+  const [copied, setCopied] = useState(false);
+  const [email] = useState(loadReceiptEmail);
+  const { receipt, profile } = state;
+  if (!receipt) return null;
 
-  // If a match already exists (e.g. page refresh), skip straight to it.
-  useEffect(() => {
-    if (state.match) dispatch({ type: 'GO', screen: 'reveal' });
-  }, [state.match, dispatch]);
-
-  // Brief "Match found!" beat before the reveal screen.
-  useEffect(() => {
-    if (phase !== 'found' || !found) return;
-    const t = setTimeout(() => dispatch({ type: 'SET_MATCH', match: found }), FOUND_MS);
-    return () => clearTimeout(t);
-  }, [phase, found, dispatch]);
-
-  useEffect(() => {
-    if (phase !== 'celebrate') return;
-    const t = setTimeout(() => setPhase('searching'), CELEBRATE_MS);
-    return () => clearTimeout(t);
-  }, [phase]);
-
-  useEffect(() => {
-    if (phase !== 'searching') return;
-    let cancelled = false;
-    const interval = setInterval(() => setLine((l) => Math.min(l + 1, STATUS_LINES.length - 1)), SEARCH_MS / STATUS_LINES.length);
-    const started = Date.now();
-    mockMatchProvider.findMatch(state.profile).then((match) => {
-      const wait = Math.max(0, SEARCH_MS - (Date.now() - started));
-      setTimeout(() => {
-        if (cancelled) return;
-        setFound(match);
-        setPhase('found');
-      }, wait);
-    });
-    return () => {
-      cancelled = true;
-      clearInterval(interval);
-    };
-  }, [phase]);
-
-  const questXp = state.xp;
+  const copy = async () => {
+    try {
+      await navigator.clipboard.writeText(receipt.registrationId);
+      setCopied(true);
+    } catch {
+      /* the ID is selectable text, so copying by hand still works */
+    }
+  };
 
   return (
     <div className="complete">
-      {phase === 'celebrate' && <Confetti count={110} burstKey="quest" />}
+      <Confetti count={120} burstKey="quest" />
 
-      <div className={cx('complete__trophy', phase !== 'celebrate' && 'is-small')}>
+      <div className="complete__trophy">
         <div className="complete__rays" aria-hidden="true" />
         <span aria-hidden="true">🏆</span>
+        <div className="complete__hero">
+          <Avatar emoji={profile.contact.avatar} gradient={PLAYER_AVATAR_GRADIENT} size={54} ring />
+        </div>
       </div>
 
       <div className="eyebrow">All {QUEST_LEVELS.length} levels cleared</div>
       <h1 className="complete__title">
-        QUEST <span className="text-gradient">COMPLETE</span>
+        Quest <span className="text-gradient">Complete!</span> <span aria-hidden="true">🎉</span>
       </h1>
+      <p className="complete__tagline">Your next friendship adventure starts here.</p>
+
+      <div className="receipt panel">
+        <div className="receipt__row">
+          <span className="receipt__label">Registration reference ID</span>
+          <span className="receipt__id">
+            <strong>{receipt.registrationId}</strong>
+            <Button variant="secondary" size="sm" onClick={copy}>
+              {copied ? 'Copied ✓' : 'Copy'}
+            </Button>
+            <span className="sr-only" role="status">
+              {copied && 'Reference ID copied'}
+            </span>
+          </span>
+        </div>
+        <div className="receipt__row">
+          <span className="receipt__label">We’ll email you at</span>
+          <strong className="receipt__email">{email ?? 'the address you registered with'}</strong>
+        </div>
+      </div>
+
+      <div className="complete__copy">
+        <p>
+          Thank you for completing Friendship Quest! We’re gathering students across the University of Alberta to help create meaningful and
+          compatible friendships.
+        </p>
+        <p>
+          Once we find a suitable friendship match for you, the Friends Across Campus team will email you with more details and the next
+          steps.
+        </p>
+        <p>
+          Your responses have been submitted successfully and will be kept private, with access limited to authorized administrators.
+        </p>
+        <p className="complete__inbox">
+          <span aria-hidden="true">📬</span> Keep an eye on your inbox!
+        </p>
+      </div>
 
       <div className="complete__stats stagger">
         <div className="stat panel">
           <div className="stat__value stat__value--gold">
-            <CountUp to={questXp} />
+            <CountUp to={state.xp} />
           </div>
           <div className="stat__label">XP earned</div>
         </div>
@@ -104,34 +100,13 @@ export function QuestCompleteScreen() {
         </div>
       </div>
 
-      <div className={cx('finder', phase !== 'celebrate' && 'is-active')}>
-        <div className="radar" aria-hidden="true">
-          <div className="radar__sweep" />
-          <div className="radar__ring radar__ring--1" />
-          <div className="radar__ring radar__ring--2" />
-          <div className="radar__center">
-            <Avatar emoji={state.profile.contact.avatar} gradient={PLAYER_AVATAR_GRADIENT} size={64} />
-          </div>
-          {MOCK_STUDENTS.map((s, i) => (
-            <div key={s.id} className={cx('radar__blip', `radar__blip--${i + 1}`, phase === 'found' && (s.id === foundId ? 'is-found' : 'is-fading'))}>
-              <Avatar emoji={phase === 'celebrate' ? '❔' : s.avatar} gradient={s.avatarGradient} size={42} />
-            </div>
-          ))}
-        </div>
-        <div className="finder__status" aria-live="polite">
-          {phase === 'celebrate' && <span>Get ready… your flock is out there.</span>}
-          {phase === 'searching' && (
-            <span key={line} className="finder__line">
-              {STATUS_LINES[line]}
-            </span>
-          )}
-          {phase === 'found' && <span className="finder__found">✨ Match found!</span>}
-        </div>
-        {phase === 'celebrate' && (
-          <Button variant="secondary" size="sm" onClick={() => setPhase('searching')}>
-            Find my flock now →
-          </Button>
-        )}
+      <div className="complete__actions">
+        <Button size="lg" onClick={() => navigate(paths.home)}>
+          Return to Home
+        </Button>
+        <Link to={paths.feedback} className="btn btn--secondary btn--lg">
+          Help Us Improve
+        </Link>
       </div>
     </div>
   );

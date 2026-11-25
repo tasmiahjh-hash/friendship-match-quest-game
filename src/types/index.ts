@@ -1,18 +1,7 @@
 // Core domain types for Friendship Quest.
 // These are shaped so they can map 1:1 onto backend tables/DTOs later.
 
-export type ScreenId =
-  | 'welcome'
-  | 'vibe'
-  | 'style'
-  | 'campus'
-  | 'meet'
-  | 'contact'
-  | 'complete'
-  | 'reveal'
-  | 'room';
-
-export type QuestLevelId = 'vibe' | 'style' | 'campus' | 'meet' | 'contact';
+export type QuestLevelId = 'contact' | 'campus' | 'style' | 'vibe' | 'meet';
 
 export interface QuestLevel {
   id: QuestLevelId;
@@ -44,33 +33,40 @@ export interface StyleQuestion {
   options: StyleOption[];
 }
 
-export interface University {
-  id: string;
+export type CampusId = 'ualberta-north' | 'ualberta-augustana' | 'ualberta-saint-jean' | 'ualberta-south';
+
+export interface Campus {
+  id: CampusId;
+  /** Full label. Stored alongside the id in every submission. */
   name: string;
   short: string;
-  emailDomain: string;
+  place: string;
   emoji: string;
 }
 
-export type YearOfStudy = '1st' | '2nd' | '3rd' | '4th' | 'Grad';
+export type YearOfStudy = '1st' | '2nd' | '3rd' | '4th' | '5th+' | 'Grad';
 
 export type MeetPreference = 'chat-first' | 'event' | 'either';
 
-export interface FriendshipEvent {
+export type CampusMatchPreference = 'same-campus' | 'any-campus';
+
+/** A kind of first hangout a student would enjoy. Illustrative ideas, not scheduled events. */
+export interface HangoutIdea {
   id: string;
   name: string;
   emoji: string;
-  date: string; // ISO date
-  time: string;
-  location: string;
-  host: string;
   description: string;
   gradient: [string, string];
-  spotsLeft: number;
+}
+
+export interface AvailabilitySlot {
+  id: string;
+  label: string;
+  emoji: string;
 }
 
 export interface CampusInfo {
-  universityId: string | null;
+  campusId: CampusId | null;
   program: string;
   year: YearOfStudy | null;
   courses: string[];
@@ -80,103 +76,24 @@ export interface ContactInfo {
   firstName: string;
   email: string;
   instagram: string;
-  agreedToGuidelines: boolean;
   avatar: string;
+  /** Self-attestation only. Enrolment is NOT verified. */
+  isStudent: boolean;
+  agreedToGuidelines: boolean;
 }
 
 export interface PlayerProfile {
-  interests: string[];
-  styleAnswers: Record<string, string>;
-  campus: CampusInfo;
-  meetPreference: MeetPreference | null;
-  availableEventIds: string[];
   contact: ContactInfo;
-}
-
-/** A student in the (mock) matching pool. Private fields are never rendered to the other user. */
-export interface Student {
-  id: string;
-  firstName: string;
-  avatar: string;
-  avatarGradient: [string, string];
-  pronouns: string;
-  program: string;
-  year: YearOfStudy;
-  bio: string;
-  interests: string[];
+  campus: CampusInfo;
   styleAnswers: Record<string, string>;
-  availableEventIds: string[];
-  meetPreference: MeetPreference;
-  /** Private — only revealed if this student explicitly chooses to share. */
-  private: {
-    email: string;
-    instagram: string;
-  };
+  interests: string[];
+  meetPreference: MeetPreference | null;
+  campusMatch: CampusMatchPreference | null;
+  hangoutIds: string[];
+  availability: string[];
 }
 
-export interface MatchResult {
-  student: Student;
-  compatibility: number;
-  sharedInterests: string[];
-  sharedEventIds: string[];
-  sharedStyleIds: string[];
-  reasons: string[];
-  sameUniversity: boolean;
-}
-
-export type ChatSender = 'me' | 'them' | 'system';
-
-export interface ChatMessage {
-  id: string;
-  from: ChatSender;
-  text: string;
-  at: number;
-  /** Highlighted card variants within the chat stream. */
-  kind?: 'text' | 'meetup' | 'contact-share' | 'notice';
-}
-
-export type MeetupStatus = 'none' | 'waiting' | 'unlocked';
-
-export interface MeetupState {
-  eventId: string | null;
-  status: MeetupStatus;
-}
-
-export type ContactChannel = 'instagram' | 'email';
-
-export interface SharingState {
-  mine: Record<ContactChannel, boolean>;
-  decided: boolean;
-  keepChattingHere: boolean;
-  /** What the match has chosen to share with the player (simulated). */
-  theirs: Partial<Record<ContactChannel, string>>;
-}
-
-export type RelationshipStatus = 'active' | 'blocked' | 'unmatched';
-
-export type ReportReason =
-  | 'harassment'
-  | 'inappropriate'
-  | 'spam'
-  | 'pressure'
-  | 'unsafe'
-  | 'other';
-
-export interface SafetyReport {
-  id: string;
-  reason: ReportReason;
-  details: string;
-  alsoBlocked: boolean;
-  at: number;
-}
-
-export type StageId =
-  | 'stranger'
-  | 'quest-complete'
-  | 'matched'
-  | 'getting-to-know'
-  | 'meetup-ready'
-  | 'new-friends';
+export type StageId = 'explorer' | 'on-quest' | 'quest-complete' | 'registered' | 'match-email';
 
 export interface Stage {
   id: StageId;
@@ -186,14 +103,11 @@ export interface Stage {
 
 export type AchievementId =
   | 'first-steps'
-  | 'same-vibe'
-  | 'campus-twins'
-  | 'conversation-starter'
-  | 'icebreaker'
-  | 'meetup-ready'
   | 'safety-first'
+  | 'campus-explorer'
+  | 'style-scout'
   | 'quest-champion'
-  | 'new-friends';
+  | 'in-the-flock';
 
 export interface Achievement {
   id: AchievementId;
@@ -212,19 +126,26 @@ export interface GameNotification {
   emoji?: string;
 }
 
+/** Proof that the storage backend confirmed a save. Never created client-side. */
+export interface RegistrationReceipt {
+  registrationId: string;
+  submittedAt: string;
+}
+
+/** Idempotency bookkeeping for the registration currently being submitted. */
+export interface SubmissionAttempt {
+  key: string;
+  fingerprint: string;
+}
+
 export interface GameState {
-  screen: ScreenId;
   profile: PlayerProfile;
   xp: number;
   completedLevels: QuestLevelId[];
   achievements: AchievementId[];
   /** One-off XP rewards already granted (prevents farming XP by repeating actions). */
   claimedRewards: string[];
-  match: MatchResult | null;
-  messages: ChatMessage[];
-  meetup: MeetupState;
-  sharing: SharingState;
-  relationship: RelationshipStatus;
-  reports: SafetyReport[];
+  attempt: SubmissionAttempt | null;
+  receipt: RegistrationReceipt | null;
   notifications: GameNotification[];
 }

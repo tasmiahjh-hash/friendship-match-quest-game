@@ -3,6 +3,8 @@
   position: relative;
   z-index: 1;
   min-height: 100vh;
+  /* Spring animations overshoot; without this, mobile browsers keep a widened page. */
+  overflow-x: clip;
 }
 
 .shell {
@@ -32,7 +34,8 @@
   flex-direction: column;
 }
 
-.shell__main--room { padding: 1.5rem clamp(16px, 2.2vw, 32px); }
+.shell__column { min-width: 0; min-height: 100vh; display: flex; flex-direction: column; }
+.shell__column .shell__main { flex: 1; }
 
 .screen { animation: fadeUp 0.55s var(--ease-out) both; flex: 1; display: flex; flex-direction: column; }
 
@@ -42,7 +45,7 @@
   .shell { grid-template-columns: 1fr; min-height: 0; }
   .shell__sidebar { display: none; }
   .shell__main { padding: 1.25rem 16px 2.5rem; }
-  .shell__main--room { padding: 0.75rem 12px 1rem; }
+  .shell__column { min-height: calc(100vh - 60px); }
 
   .topbar {
     display: flex;
@@ -116,7 +119,10 @@
 }
 
 /* ---------- Brand ---------- */
-.brand { display: flex; align-items: center; gap: 0.65rem; }
+.brand { display: flex; align-items: center; gap: 0.65rem; color: var(--text); text-decoration: none; }
+.brand__text { display: flex; flex-direction: column; line-height: 1.15; }
+.brand__by { font-size: 0.72rem; font-weight: 600; color: var(--text-soft); }
+.brand--compact .brand__by { display: none; }
 
 .brand__mark {
   width: 36px;
@@ -193,6 +199,7 @@
 .questmap, .journey { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 0.35rem; }
 
 .questmap__item {
+  text-decoration: none;
   display: flex;
   align-items: center;
   gap: 0.7rem;
@@ -205,6 +212,7 @@
 
 .questmap__item.is-current { background: rgba(255, 138, 107, 0.12); color: var(--text); }
 .questmap__item.is-done { color: var(--text-soft); }
+a.questmap__item:hover { background: var(--surface); color: var(--text); }
 
 .questmap__dot {
   width: 26px;
@@ -223,7 +231,7 @@
 .questmap__item.is-done .questmap__dot { background: rgba(94, 226, 181, 0.18); color: var(--mint); border-color: rgba(94, 226, 181, 0.4); }
 .questmap__label { flex: 1; font-weight: 600; }
 .questmap__xp { font-size: 0.75rem; font-weight: 700; color: var(--gold); opacity: 0.8; }
-.questmap__item.is-done .questmap__xp { text-decoration: line-through; opacity: 0.4; }
+.questmap__item.is-done .questmap__xp { text-decoration: line-through; opacity: 0.6; }
 
 .journey { gap: 0; }
 
@@ -273,7 +281,7 @@
   animation: pulseGlow 2.4s infinite;
 }
 
-.badges { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.5rem; }
+.badges { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.5rem; }
 
 .badge {
   aspect-ratio: 1;
@@ -291,7 +299,7 @@
 }
 
 .badge__emoji { font-size: 1.3rem; filter: grayscale(1); opacity: 0.45; }
-.badge__name { font-size: 0.64rem; font-weight: 700; color: var(--muted); line-height: 1.15; }
+.badge__name { font-size: 0.68rem; font-weight: 700; color: var(--muted); line-height: 1.15; }
 
 .badge.is-earned {
   background: linear-gradient(160deg, rgba(167, 139, 250, 0.25), rgba(255, 126, 182, 0.15));
@@ -302,4 +310,4 @@
 .badge.is-earned .badge__emoji { filter: none; opacity: 1; font-size: 1.45rem; }
 .badge.is-earned .badge__name { color: var(--text); }
 
-.hud__footer { display: flex; justify-content: space-between; gap: 0.5rem; padding-top: 0.4rem; border-top: 1px solid var(--border); padding-top: 1rem; }
+.hud__footer { display: flex; flex-wrap: wrap; gap: 0.5rem; border-top: 1px solid var(--border); padding-top: 1rem; }

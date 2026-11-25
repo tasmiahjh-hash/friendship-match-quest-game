@@ -1,9 +1,11 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { QUEST_LEVELS } from '../../data/levels';
 import { useGame } from '../../state/GameContext';
-import { LEVEL_ORDER } from '../../state/gameLogic';
+import { LEVEL_ORDER, allLevelsComplete } from '../../state/gameLogic';
+import { navigate, paths } from '../../state/router';
+import { missingIn } from '../../state/validation';
 import type { QuestLevelId } from '../../types';
-import { cx } from '../../utils';
+import { cx, prefersReducedMotion } from '../../utils';
 import { Button } from '../ui/Button';
 import { Confetti } from '../ui/Confetti';
 import { Portal } from '../ui/Portal';
@@ -12,57 +14,51 @@ interface LevelShellProps {
   level: QuestLevelId;
   heading: ReactNode;
   subheading?: ReactNode;
-  canContinue: boolean;
-  hint?: string;
-  continueLabel?: string;
-  /** Hide the footer (e.g. while a sub-step is in progress). */
-  hideFooter?: boolean;
   children: ReactNode;
 }
 
 const BURST_MS = 1500;
+const BURST_REDUCED_MS = 700;
 
-export function LevelShell({ level, heading, subheading, canContinue, hint, continueLabel, hideFooter, children }: LevelShellProps) {
+export function LevelShell({ level, heading, subheading, children }: LevelShellProps) {
   const { state, dispatch } = useGame();
   const [celebrating, setCelebrating] = useState(false);
   const timer = useRef<number>();
   const meta = QUEST_LEVELS.find((l) => l.id === level)!;
   const idx = LEVEL_ORDER.indexOf(level);
   const alreadyDone = state.completedLevels.includes(level);
+  const editing = allLevelsComplete(state);
+  const missing = missingIn(level, state.profile);
+  const canContinue = missing.length === 0;
 
   useEffect(() => () => window.clearTimeout(timer.current), []);
 
-  useEffect(() => {
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-  }, [level]);
+  const finish = () => {
+    dispatch({ type: 'COMPLETE_LEVEL', level });
+    const isLast = idx === LEVEL_ORDER.length - 1;
+    navigate(editing || isLast ? paths.review : paths.level(LEVEL_ORDER[idx + 1]));
+  };
 
   const complete = () => {
     if (!canContinue || celebrating) return;
     if (alreadyDone) {
-      dispatch({ type: 'COMPLETE_LEVEL', level });
+      finish();
       return;
     }
     setCelebrating(true);
-    timer.current = window.setTimeout(() => {
-      dispatch({ type: 'COMPLETE_LEVEL', level });
-    }, BURST_MS);
+    timer.current = window.setTimeout(finish, prefersReducedMotion() ? BURST_REDUCED_MS : BURST_MS);
   };
 
-  const back = () => dispatch({ type: 'GO', screen: idx === 0 ? 'welcome' : LEVEL_ORDER[idx - 1] });
+  const back = () => navigate(idx === 0 ? paths.home : paths.level(LEVEL_ORDER[idx - 1]));
+
+  const label = editing ? 'Save and review' : idx === LEVEL_ORDER.length - 1 ? 'Review answers' : 'Complete level';
 
   return (
     <div className="level">
       <header className="level__header">
-        <div className="level__steps" aria-label={`Level ${meta.number} of ${QUEST_LEVELS.length}`}>
+        <div className="level__steps" role="img" aria-label={`Level ${meta.number} of ${QUEST_LEVELS.length}`}>
           {QUEST_LEVELS.map((l, i) => (
-            <span
-              key={l.id}
-              className={cx(
-                'level__step',
-                state.completedLevels.includes(l.id) && 'is-done',
-                i === idx && 'is-current',
-              )}
-            />
+            <span key={l.id} className={cx('level__step', state.completedLevels.includes(l.id) && 'is-done', i === idx && 'is-current')} />
           ))}
         </div>
         <div className="level__eyebrow">
@@ -78,31 +74,33 @@ export function LevelShell({ level, heading, subheading, canContinue, hint, cont
 
       <div className="level__body">{children}</div>
 
-      {!hideFooter && (
-        <footer className="level__footer">
-          <Button variant="ghost" onClick={back} icon="←">
-            Back
+      <div className="level__footer">
+        <Button variant="ghost" onClick={back} icon="←">
+          Back
+        </Button>
+        <div className="level__footer-right">
+          <span className="level__hint" role="status">
+            {!canContinue && `Still needed: ${missing.join(', ')}`}
+          </span>
+          <Button size="lg" onClick={complete} disabled={!canContinue} pulse={canContinue && !alreadyDone}>
+            {label} <span aria-hidden="true">→</span>
           </Button>
-          <div className="level__footer-right">
-            {!canContinue && hint && <span className="level__hint">{hint}</span>}
-            <Button size="lg" onClick={complete} disabled={!canContinue} pulse={canContinue && !alreadyDone}>
-              {continueLabel ?? (idx === LEVEL_ORDER.length - 1 ? 'Complete quest' : 'Complete level')} →
-            </Button>
-          </div>
-        </footer>
-      )}
+        </div>
+      </div>
 
       {celebrating && (
         <Portal>
-        <div className="burst" role="status">
-          <Confetti count={60} burstKey={level} />
-          <div className="burst__card">
-            <div className="burst__icon">{meta.icon}</div>
-            <div className="eyebrow">Level {meta.number} complete</div>
-            <div className="burst__title">{meta.title}</div>
-            <div className="burst__xp">+{meta.xp} XP</div>
+          <div className="burst" role="status">
+            <Confetti count={60} burstKey={level} />
+            <div className="burst__card">
+              <div className="burst__icon" aria-hidden="true">
+                {meta.icon}
+              </div>
+              <div className="eyebrow">Level {meta.number} complete</div>
+              <div className="burst__title">{meta.title}</div>
+              <div className="burst__xp">+{meta.xp} XP</div>
+            </div>
           </div>
-        </div>
         </Portal>
       )}
     </div>

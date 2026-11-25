@@ -1,26 +1,30 @@
-import { useState } from 'react';
-import { PROGRAM_SUGGESTIONS, UNIVERSITIES, YEARS } from '../../data/campus';
+import { useEffect, useId, useRef, useState } from 'react';
+import { CAMPUSES, MAX_COURSES, PROGRAM_SUGGESTIONS, YEARS, yearLabel } from '../../data/campus';
 import { useGame } from '../../state/GameContext';
 import { cx } from '../../utils';
+import { onRadioKeys, radioTabIndex } from '../ui/radioKeys';
 import { LevelShell } from './LevelShell';
-
-const MAX_COURSES = 6;
 
 export function CampusLevel() {
   const { state, dispatch } = useGame();
   const campus = state.profile.campus;
   const [courseDraft, setCourseDraft] = useState('');
+  const id = useId();
 
   const update = (patch: Partial<typeof campus>) => dispatch({ type: 'UPDATE_CAMPUS', patch });
 
   const addCourse = () => {
-    const code = courseDraft.trim().toUpperCase();
-    if (!code || campus.courses.includes(code) || campus.courses.length >= MAX_COURSES) return;
-    update({ courses: [...campus.courses, code] });
+    const code = courseDraft.trim().replace(/\s+/g, ' ').toUpperCase();
+    if (!code || campus.courses.length >= MAX_COURSES) return;
+    if (!campus.courses.includes(code)) update({ courses: [...campus.courses, code] });
     setCourseDraft('');
   };
 
-  const missing = [!campus.universityId && 'university', !campus.program.trim() && 'program', !campus.year && 'year'].filter(Boolean);
+  // A typed course is kept even if the student leaves without pressing Add. Doing this on
+  // blur instead would shift the page mid-click and swallow the click on "Complete level".
+  const leave = useRef(addCourse);
+  leave.current = addCourse;
+  useEffect(() => () => leave.current(), []);
 
   return (
     <LevelShell
@@ -30,47 +34,62 @@ export function CampusLevel() {
           Your <span className="text-gradient">campus life</span>
         </>
       }
-      subheading="You’ll only be matched with students at your own university. Courses are optional, but they make great conversation starters."
-      canContinue={missing.length === 0}
-      hint={missing.length ? `Add your ${missing.join(', ')}` : undefined}
+      subheading="Friendship Quest is for University of Alberta students. Tell us where we’d find you. Courses are optional, but they make great conversation starters."
     >
       <section className="form-block">
-        <h3 className="form-block__title">
-          <span className="form-block__num">1</span> Your university
-        </h3>
-        <div className="uni-grid stagger">
-          {UNIVERSITIES.map((u) => (
+        <h2 className="form-block__title" id={`${id}-campus`}>
+          <span className="form-block__num" aria-hidden="true">
+            1
+          </span>{' '}
+          Your campus
+        </h2>
+        <div className="uni-grid stagger" role="radiogroup" aria-labelledby={`${id}-campus`} onKeyDown={onRadioKeys}>
+          {CAMPUSES.map((c, i) => (
             <button
-              key={u.id}
-              className={cx('uni', campus.universityId === u.id && 'is-on')}
-              aria-pressed={campus.universityId === u.id}
-              onClick={() => update({ universityId: u.id })}
+              key={c.id}
+              type="button"
+              role="radio"
+              className={cx('uni', campus.campusId === c.id && 'is-on')}
+              aria-checked={campus.campusId === c.id}
+              tabIndex={radioTabIndex(campus.campusId === c.id, Boolean(campus.campusId), i)}
+              onClick={() => update({ campusId: c.id })}
             >
               <span className="uni__emoji" aria-hidden="true">
-                {u.emoji}
+                {c.emoji}
               </span>
-              <span className="uni__name">{u.name}</span>
-              <span className="uni__domain">@{u.emailDomain}</span>
+              <span className="uni__name">{c.name}</span>
+              <span className="uni__domain">{c.place}</span>
             </button>
           ))}
         </div>
       </section>
 
       <section className="form-block">
-        <h3 className="form-block__title">
-          <span className="form-block__num">2</span> Program
-        </h3>
+        <h2 className="form-block__title">
+          <span className="form-block__num" aria-hidden="true">
+            2
+          </span>{' '}
+          <label htmlFor={`${id}-program`}>Program</label>
+        </h2>
         <input
+          id={`${id}-program`}
           className={cx('input', campus.program.trim() && 'input--valid')}
           placeholder="e.g. Psychology"
           value={campus.program}
           maxLength={60}
+          required
           onChange={(e) => update({ program: e.target.value })}
-          aria-label="Program"
+          onBlur={() => update({ program: campus.program.trim() })}
         />
-        <div className="suggestions">
+        <div className="suggestions" role="group" aria-label="Program suggestions">
           {PROGRAM_SUGGESTIONS.map((p) => (
-            <button key={p} className={cx('suggestion', campus.program === p && 'is-on')} onClick={() => update({ program: p })}>
+            <button
+              key={p}
+              type="button"
+              aria-pressed={campus.program === p}
+              className={cx('suggestion', campus.program === p && 'is-on')}
+              onClick={() => update({ program: p })}
+            >
               {p}
             </button>
           ))}
@@ -78,28 +97,37 @@ export function CampusLevel() {
       </section>
 
       <section className="form-block">
-        <h3 className="form-block__title">
-          <span className="form-block__num">3</span> Year of study
-        </h3>
-        <div className="segmented" role="radiogroup" aria-label="Year of study">
-          {YEARS.map((y) => (
+        <h2 className="form-block__title" id={`${id}-year`}>
+          <span className="form-block__num" aria-hidden="true">
+            3
+          </span>{' '}
+          Year of study
+        </h2>
+        <div className="segmented" role="radiogroup" aria-labelledby={`${id}-year`} onKeyDown={onRadioKeys}>
+          {YEARS.map((y, i) => (
             <button
               key={y}
+              type="button"
               role="radio"
               aria-checked={campus.year === y}
+              tabIndex={radioTabIndex(campus.year === y, Boolean(campus.year), i)}
               className={cx('segmented__opt', campus.year === y && 'is-on')}
               onClick={() => update({ year: y })}
             >
-              {y === 'Grad' ? 'Grad' : `${y} year`}
+              {yearLabel(y)}
             </button>
           ))}
         </div>
       </section>
 
       <section className="form-block">
-        <h3 className="form-block__title">
-          <span className="form-block__num">4</span> Courses <span className="field__optional">optional</span>
-        </h3>
+        <h2 className="form-block__title">
+          <span className="form-block__num" aria-hidden="true">
+            4
+          </span>{' '}
+          <label htmlFor={`${id}-course`}>Courses</label>{' '}
+          <span className="field__optional">optional · up to {MAX_COURSES}</span>
+        </h2>
         <form
           className="course-input"
           onSubmit={(e) => {
@@ -108,12 +136,12 @@ export function CampusLevel() {
           }}
         >
           <input
+            id={`${id}-course`}
             className="input"
-            placeholder="e.g. PSYC 101"
+            placeholder="e.g. PSYCH 104"
             value={courseDraft}
             maxLength={16}
             onChange={(e) => setCourseDraft(e.target.value)}
-            aria-label="Add a course"
             disabled={campus.courses.length >= MAX_COURSES}
           />
           <button type="submit" className="btn btn--secondary" disabled={!courseDraft.trim()}>
@@ -121,19 +149,16 @@ export function CampusLevel() {
           </button>
         </form>
         {campus.courses.length > 0 && (
-          <div className="course-list">
+          <ul className="course-list" aria-label="Your courses">
             {campus.courses.map((c) => (
-              <span key={c} className="tag tag--lav course-tag">
-                📘 {c}
-                <button
-                  aria-label={`Remove ${c}`}
-                  onClick={() => update({ courses: campus.courses.filter((x) => x !== c) })}
-                >
+              <li key={c} className="tag tag--lav course-tag">
+                <span aria-hidden="true">📘</span> {c}
+                <button type="button" aria-label={`Remove ${c}`} onClick={() => update({ courses: campus.courses.filter((x) => x !== c) })}>
                   ✕
                 </button>
-              </span>
+              </li>
             ))}
-          </div>
+          </ul>
         )}
       </section>
     </LevelShell>

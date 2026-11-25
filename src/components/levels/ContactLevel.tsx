@@ -1,176 +1,202 @@
-import { useState } from 'react';
-import { UNIVERSITIES, universityById } from '../../data/campus';
-import { PLAYER_AVATARS, PLAYER_AVATAR_GRADIENT } from '../../data/students';
+import { useId, useState } from 'react';
+import { PLAYER_AVATARS, PLAYER_AVATAR_GRADIENT } from '../../data/avatars';
 import { useGame } from '../../state/GameContext';
-import { cx, isUniversityEmail, isValidEmail, normaliseInstagram } from '../../utils';
+import { cx, isValidEmail, isValidInstagram, normaliseInstagram } from '../../utils';
+import { EMAIL_MAX } from '../../utils/email';
 import { Avatar } from '../ui/Avatar';
 import { Checkbox } from '../ui/Checkbox';
 import { GuidelinesModal } from '../ui/GuidelinesModal';
+import { onRadioKeys, radioTabIndex } from '../ui/radioKeys';
 import { LevelShell } from './LevelShell';
+
+const AVATAR_NAMES: Record<string, string> = {
+  '🦊': 'Fox',
+  '🐼': 'Panda',
+  '🦉': 'Owl',
+  '🐸': 'Frog',
+  '🐧': 'Penguin',
+  '🦦': 'Otter',
+  '🐨': 'Koala',
+  '🦋': 'Butterfly',
+};
 
 export function ContactLevel() {
   const { state, dispatch } = useGame();
   const contact = state.profile.contact;
-  const uni = universityById(state.profile.campus.universityId);
   const [guidelinesOpen, setGuidelinesOpen] = useState(false);
   const [emailTouched, setEmailTouched] = useState(Boolean(contact.email));
+  const [instaTouched, setInstaTouched] = useState(Boolean(contact.instagram));
+  const id = useId();
 
   const update = (patch: Partial<typeof contact>) => dispatch({ type: 'UPDATE_CONTACT', patch });
 
-  const domains = uni ? [uni.emailDomain] : UNIVERSITIES.map((u) => u.emailDomain);
-  const emailShapeOk = isValidEmail(contact.email);
-  const emailOk = emailShapeOk && isUniversityEmail(contact.email, domains);
   const nameOk = contact.firstName.trim().length >= 1;
-
-  const missing = [!nameOk && 'first name', !emailOk && 'university email', !contact.agreedToGuidelines && 'guidelines agreement'].filter(Boolean);
-
-  let emailHint = `Use your university address${uni ? ` (e.g. name@${uni.emailDomain})` : ''}.`;
-  let emailTone: 'ok' | 'warn' | undefined;
-  if (emailTouched && contact.email) {
-    if (emailOk) {
-      emailHint = 'Looks like a university email ✓ In the full app we’d send a one-time code to verify it.';
-      emailTone = 'ok';
-    } else if (emailShapeOk) {
-      emailHint = `That doesn’t look like a university address${uni ? `. Try @${uni.emailDomain}` : ''}.`;
-      emailTone = 'warn';
-    } else {
-      emailHint = 'Check the email format.';
-      emailTone = 'warn';
-    }
-  }
+  const emailOk = isValidEmail(contact.email);
+  const emailBad = emailTouched && contact.email.trim() !== '' && !emailOk;
+  const instaBad = instaTouched && !isValidInstagram(contact.instagram);
 
   return (
     <LevelShell
       level="contact"
       heading={
         <>
-          Your <span className="text-gradient">player card</span>
+          Create your <span className="text-gradient">player card</span>
         </>
       }
-      subheading="Last level! This is how Friendship Quest knows you’re a real student at your university."
-      canContinue={missing.length === 0}
-      hint={missing.length ? `Add your ${missing.join(', ')}` : undefined}
-      continueLabel="Complete quest"
+      subheading="Every quest needs a hero. Tell us who you are and where we can email you when your match is ready."
     >
       <div className="contact-layout">
         <div className="contact-form">
           <section className="form-block">
-            <h3 className="form-block__title">Pick your avatar</h3>
-            <div className="avatar-picker" role="radiogroup" aria-label="Avatar">
-              {PLAYER_AVATARS.map((a) => (
+            <h2 className="form-block__title" id={`${id}-avatar`}>
+              Pick your avatar
+            </h2>
+            <div className="avatar-picker" role="radiogroup" aria-labelledby={`${id}-avatar`} onKeyDown={onRadioKeys}>
+              {PLAYER_AVATARS.map((a, i) => (
                 <button
                   key={a}
+                  type="button"
                   role="radio"
                   aria-checked={contact.avatar === a}
+                  aria-label={AVATAR_NAMES[a]}
+                  tabIndex={radioTabIndex(contact.avatar === a, true, i)}
                   className={cx('avatar-picker__opt', contact.avatar === a && 'is-on')}
                   onClick={() => update({ avatar: a })}
                 >
-                  {a}
+                  <span aria-hidden="true">{a}</span>
                 </button>
               ))}
             </div>
           </section>
 
-          <label className="field">
-            <span className="field__label">First name</span>
+          <div className="field">
+            <label className="field__label" htmlFor={`${id}-name`}>
+              First name
+            </label>
             <input
+              id={`${id}-name`}
               className={cx('input', nameOk && 'input--valid')}
               placeholder="What should your match call you?"
               value={contact.firstName}
               maxLength={30}
+              required
               autoComplete="given-name"
+              aria-describedby={`${id}-name-hint`}
               onChange={(e) => update({ firstName: e.target.value })}
             />
-            <span className="field__hint">Only your first name is shown to matches.</span>
-          </label>
-
-          <label className="field">
-            <span className="field__label">
-              University email <span className="field__optional">🔒 private</span>
+            <span className="field__hint" id={`${id}-name-hint`}>
+              A first name or nickname is enough.
             </span>
+          </div>
+
+          <div className="field">
+            <label className="field__label" htmlFor={`${id}-email`}>
+              Email address <span className="field__optional">🔒 private</span>
+            </label>
             <input
+              id={`${id}-email`}
               className={cx('input', emailTouched && contact.email && (emailOk ? 'input--valid' : 'input--invalid'))}
               type="email"
-              placeholder={uni ? `you@${uni.emailDomain}` : 'you@university.edu'}
+              inputMode="email"
+              placeholder="you@ualberta.ca"
               value={contact.email}
+              maxLength={EMAIL_MAX}
+              required
               autoComplete="email"
+              aria-invalid={emailBad}
+              aria-describedby={`${id}-email-hint ${id}-email-error`}
               onChange={(e) => update({ email: e.target.value })}
-              onBlur={() => setEmailTouched(true)}
+              onBlur={() => {
+                setEmailTouched(true);
+                update({ email: contact.email.trim() });
+              }}
             />
-            <span className={cx('field__hint', emailTone && `field__hint--${emailTone}`)}>{emailHint}</span>
-          </label>
-
-          <label className="field">
-            <span className="field__label">
-              Instagram <span className="field__optional">optional · 🔒 private</span>
+            <span className="field__hint field__hint--warn" id={`${id}-email-error`} role="status">
+              {emailBad && 'That doesn’t look like a complete email address. Check for typos, like a missing @ or ending.'}
             </span>
+            <span className="field__hint" id={`${id}-email-hint`}>
+              We recommend using your University of Alberta email (@ualberta.ca), but any valid email address is welcome. We’ll use this
+              address to notify you when your friendship match is ready.
+            </span>
+          </div>
+
+          <div className="field">
+            <label className="field__label" htmlFor={`${id}-insta`}>
+              Instagram <span className="field__optional">optional · 🔒 private</span>
+            </label>
             <input
-              className="input"
+              id={`${id}-insta`}
+              className={cx('input', instaBad && 'input--invalid')}
               placeholder="@yourhandle"
               value={contact.instagram}
               maxLength={31}
+              autoCapitalize="none"
+              autoComplete="off"
+              aria-invalid={instaBad}
+              aria-describedby={`${id}-insta-hint`}
               onChange={(e) => update({ instagram: e.target.value })}
-              onBlur={() => update({ instagram: normaliseInstagram(contact.instagram) })}
-            />
-          </label>
-
-          <Checkbox checked={contact.agreedToGuidelines} onChange={(v) => update({ agreedToGuidelines: v })}>
-            I agree to the{' '}
-            <button
-              type="button"
-              className="link"
-              onClick={(e) => {
-                e.preventDefault();
-                setGuidelinesOpen(true);
+              onBlur={() => {
+                setInstaTouched(true);
+                update({ instagram: normaliseInstagram(contact.instagram) });
               }}
-            >
-              community guidelines
-            </button>
-            : be kind, respect boundaries, keep first meetups public, and never pressure anyone to share contact info.
+            />
+            <span className={cx('field__hint', instaBad && 'field__hint--warn')} id={`${id}-insta-hint`} role="status">
+              {instaBad
+                ? 'Handles only use letters, numbers, dots and underscores.'
+                : 'Only if you’d like it as a way to connect. It’s shared with a match only if you agree later.'}
+            </span>
+          </div>
+
+          <Checkbox checked={contact.isStudent} onChange={(v) => update({ isStudent: v })}>
+            I confirm that I am currently a University of Alberta student.
           </Checkbox>
+
+          <div className="check-group">
+            <Checkbox checked={contact.agreedToGuidelines} onChange={(v) => update({ agreedToGuidelines: v })}>
+              I agree to the community guidelines: be kind, respect boundaries, keep first meetups public, and never pressure anyone to share
+              contact info.
+            </Checkbox>
+            <button type="button" className="link" onClick={() => setGuidelinesOpen(true)}>
+              Read the community guidelines
+            </button>
+          </div>
         </div>
 
-        <aside className="privacy-card">
+        <aside className="privacy-card" aria-label="How your details are used">
           <div className="privacy-card__lock" aria-hidden="true">
             🔒
           </div>
-          <h3>Your contact information stays private.</h3>
+          <h2>Your contact details aren’t shared automatically.</h2>
           <p>
-            Your match will <strong>not</strong> see your email or Instagram unless you explicitly choose to share it later.
+            We won’t give your email or Instagram to another participant <strong>without your consent</strong>.
           </p>
           <div className="privacy-card__preview">
-            <div className="eyebrow">What your match sees</div>
+            <div className="eyebrow">Your player card</div>
             <div className="privacy-card__row">
               <Avatar emoji={contact.avatar} gradient={PLAYER_AVATAR_GRADIENT} size={44} />
               <div>
                 <div className="privacy-card__name">{contact.firstName.trim() || 'Your first name'}</div>
-                <div className="muted privacy-card__small">
-                  {state.profile.campus.program || 'Program'} · {uni?.short ?? 'Uni'}
-                </div>
+                <div className="muted privacy-card__small">University of Alberta</div>
               </div>
             </div>
             <div className="privacy-card__hidden">
               <span>📧 Email</span>
-              <span className="tag">Hidden</span>
+              <span className="tag">Private</span>
             </div>
             <div className="privacy-card__hidden">
               <span>📸 Instagram</span>
-              <span className="tag">Hidden</span>
+              <span className="tag">Private</span>
             </div>
           </div>
           <ul className="privacy-card__list">
-            <li>✓ University email = students only</li>
-            <li>✓ Chat happens inside Friendship Quest</li>
-            <li>✓ You control what you share, and when</li>
+            <li>✓ No account or password needed</li>
+            <li>✓ Nothing is sent until you submit at the end</li>
+            <li>✓ You can review everything first</li>
           </ul>
         </aside>
       </div>
 
-      <GuidelinesModal
-        open={guidelinesOpen}
-        onClose={() => setGuidelinesOpen(false)}
-        onAgree={() => update({ agreedToGuidelines: true })}
-      />
+      <GuidelinesModal open={guidelinesOpen} onClose={() => setGuidelinesOpen(false)} onAgree={() => update({ agreedToGuidelines: true })} />
     </LevelShell>
   );
 }

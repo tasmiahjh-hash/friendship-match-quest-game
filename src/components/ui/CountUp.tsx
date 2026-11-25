@@ -1,10 +1,15 @@
 import { useEffect, useState } from 'react';
+import { prefersReducedMotion } from '../../utils';
 
 /** Animates a number from 0 to `to` with an ease-out curve. */
 export function CountUp({ to, duration = 1600, delay = 0 }: { to: number; duration?: number; delay?: number }) {
   const [n, setN] = useState(0);
 
   useEffect(() => {
+    if (prefersReducedMotion()) {
+      setN(to);
+      return;
+    }
     let raf = 0;
     let start = 0;
     const timer = setTimeout(() => {
